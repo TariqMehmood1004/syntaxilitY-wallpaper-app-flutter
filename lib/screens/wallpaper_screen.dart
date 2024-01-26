@@ -1,8 +1,9 @@
-// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers
+// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers, sized_box_for_whitespace
 
 import 'package:flutter/material.dart';
 import 'package:syntaxity_wallpaper/Helpers/wallpaper_database_helpers.dart';
 import 'package:syntaxity_wallpaper/Models/wallpaper_model.dart';
+import 'package:syntaxity_wallpaper/screens/wallpaper_expanded_screen.dart';
 
 class WallpaperScreen extends StatefulWidget {
   const WallpaperScreen({Key? key}) : super(key: key);
@@ -72,46 +73,142 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
       appBar: AppBar(
         title: const Text('tumigo Wallpapers'),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(16.0),
-        color: Colors.grey[200],
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Expanded(
-          flex: 1,
-          child: FutureBuilder(
-            future: _databaseHelper.getWallpapers(),
-            builder: (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text('No wallpapers available.');
-              } else {
-                return GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // Number of columns in the grid
-                    crossAxisSpacing: 8.0, // Spacing between columns
-                    mainAxisSpacing: 8.0, // Spacing between rows
-                    childAspectRatio: 1.0, // Aspect ratio of each grid item
-                    mainAxisExtent: 200.0, // Height of each grid item
-                  ),
-                  itemCount: snapshot.data!.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: Image.network(
-                        snapshot.data![index].imageUrl,
-                        fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 200,
+                      child: FutureBuilder(
+                        future: _databaseHelper.getWallpapers(),
+                        builder:
+                            (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return const Text('No wallpapers available.');
+                          } else {
+                            return GridView.builder(
+                              // Adjusted to make it take only the space it needs
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 1,
+                                mainAxisExtent: 300,
+                                mainAxisSpacing: 0,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              shrinkWrap:
+                                  true, // Adjusted to make it take only the space it needs
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            WallpaperExpandedScreen(
+                                          imageUrl:
+                                              snapshot.data![index].imageUrl,
+                                          wallpaperId: snapshot.data![index]
+                                              .id, // Pass the wallpaper ID
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        snapshot.data![index].imageUrl,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                        },
                       ),
-                    );
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+
+              // Second Container with GridView
+              Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: FutureBuilder(
+                  future: _databaseHelper.getWallpapers(),
+                  builder: (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('No wallpapers available.');
+                    } else {
+                      return GridView.builder(
+                        // Adjusted to make it take only the space it needs
+                        padding: const EdgeInsets.all(8.0),
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 4.0,
+                          mainAxisSpacing: 4.0,
+                          childAspectRatio: 1.0,
+                          mainAxisExtent: 200.0,
+                        ),
+                        itemCount: snapshot.data!.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WallpaperExpandedScreen(
+                                    imageUrl: snapshot.data![index].imageUrl,
+                                    wallpaperId: snapshot.data![index]
+                                        .id, // Pass the wallpaper ID
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.network(
+                                snapshot.data![index].imageUrl,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
                   },
-                );
-              }
-            },
+                ),
+              ),
+            ],
           ),
         ),
       ),
