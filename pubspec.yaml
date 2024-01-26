@@ -1,0 +1,28 @@
+name: syntaxity_wallpaper
+description: "This is a wallpaper Android based app."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+  
+dependencies:
+  flutter:
+    sdk: flutter
+
+  image_picker: ^1.0.7
+  photo_view: ^0.14.0
+  http: ^1.2.0
+  cupertino_icons: ^1.0.6
+  flutter_lints: ^3.0.1
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+
+flutter:
+
+  uses-material-design: true
