@@ -49,7 +49,10 @@ class WallpaperDatabaseHelper {
 
   Future<List<Wallpaper>> getWallpapers() async {
     Database db = await database;
-    List<Map<String, dynamic>> maps = await db.query('wallpapers');
+    List<Map<String, dynamic>> maps = await db.query(
+      'wallpapers',
+      orderBy: 'id DESC', // Order by ID in descending order
+    );
 
     return List.generate(maps.length, (i) {
       return Wallpaper.fromMap(maps[i]);

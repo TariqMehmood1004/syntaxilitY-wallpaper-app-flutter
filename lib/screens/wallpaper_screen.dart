@@ -1,8 +1,8 @@
-// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers, sized_box_for_whitespace, unnecessary_cast
+// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers, sized_box_for_whitespace, unnecessary_cast, depend_on_referenced_packages
 
 import 'dart:io';
 import 'dart:math';
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -82,14 +82,6 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     }
   }
 
-  // Future<void> _saveImageToDatabase(String imagePath) async {
-  //   // generate the integer random id for the wallpaper
-  //   Random random = Random();
-  //   int randomId = random.nextInt(1000000);
-  //   Wallpaper wallpaper = Wallpaper(imageUrl: imagePath, id: randomId);
-  //   await WallpaperDatabaseHelper().insertWallpaper(wallpaper);
-  // }
-
   Future<void> _saveImageToDatabase(String imagePath) async {
     // Generate the integer random id for the wallpaper
     Random random = Random();
@@ -111,6 +103,21 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
       Wallpaper wallpaper = Wallpaper(imageUrl: tempPath, id: randomId);
       await _databaseHelper.insertWallpaper(wallpaper);
     }
+
+    // Show Flutter toast message
+    Fluttertoast.showToast(
+      msg: 'Image inserted successfully!',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+
+    // Refresh the list by calling setState
+    setState(() {});
+    await _databaseHelper.getWallpapers();
   }
 
   @override
@@ -136,12 +143,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
         child: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
-        notificationPredicate: (notification) {
-          if (notification is ScrollStartNotification) {
-            return true;
-          }
-          return false;
-        },
+        triggerMode: RefreshIndicatorTriggerMode.onEdge,
         onRefresh: () {
           return _databaseHelper.getWallpapers();
         },
