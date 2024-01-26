@@ -1,5 +1,4 @@
-Certainly! A good README file provides essential information about your project, including how to install, use, and contribute to it. Here's a template you can use as a starting point for your Flutter wallpaper app's README.md:
-
+# Tumigo Wallpaper App
 ```markdown
 # Flutter Wallpaper App
 
