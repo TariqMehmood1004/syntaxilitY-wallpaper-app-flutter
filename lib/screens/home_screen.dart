@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../Models/unsplash_image_api_model.dart'; // Adjust the import path based on your project structure
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -27,7 +27,7 @@ class HomeScreenState extends State<HomeScreen> {
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<ImageModel> wallpapers =
-      jsonData.map((e) => ImageModel.fromJson(e)).toList();
+          jsonData.map((e) => ImageModel.fromJson(e)).toList();
 
       setState(() {
         _latestWallpapers = wallpapers;
@@ -51,18 +51,18 @@ class HomeScreenState extends State<HomeScreen> {
               title: const Text('Latest Wallpapers'),
               background: _latestWallpapers.isNotEmpty
                   ? Image.network(
-                _latestWallpapers[0].urls.full,
-                fit: BoxFit.cover,
-              )
+                      _latestWallpapers[0].urls.full,
+                      fit: BoxFit.cover,
+                    )
                   : Image.network(
-                'https://example.com/placeholder.jpg',
-                fit: BoxFit.cover,
-              ),
+                      'https://example.com/placeholder.jpg',
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
+              (BuildContext context, int index) {
                 final ImageModel wallpaper = _latestWallpapers[index];
 
                 return ListTile(
