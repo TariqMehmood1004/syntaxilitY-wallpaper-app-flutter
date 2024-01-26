@@ -38,70 +38,70 @@ class _WallpaperExpandedScreenState extends State<WallpaperExpandedScreen> {
 
   bool isSetWallpaper = false;
 
-  Future<void> setWallpaper() async {
-    try {
-      if (isSetWallpaper) {
-        // Prompt user to choose Home or Lock screen
-        int? selectedLocation = await showDialog<int>(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Choose wallpaper location'),
-              content:
-                  const Text('Select where you want to set the wallpaper:'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pop(WallpaperManager.HOME_SCREEN),
-                  child: const Text('Home Screen'),
-                ),
-                TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pop(WallpaperManager.LOCK_SCREEN),
-                  child: const Text('Lock Screen'),
-                ),
-              ],
-            );
-          },
-        );
+  // Future<void> setWallpaper() async {
+  //   try {
+  //     if (isSetWallpaper) {
+  //       // Prompt user to choose Home or Lock screen
+  //       int? selectedLocation = await showDialog<int>(
+  //         context: context,
+  //         builder: (BuildContext context) {
+  //           return AlertDialog(
+  //             title: const Text('Choose wallpaper location'),
+  //             content:
+  //                 const Text('Select where you want to set the wallpaper:'),
+  //             actions: <Widget>[
+  //               TextButton(
+  //                 onPressed: () =>
+  //                     Navigator.of(context).pop(WallpaperManager.HOME_SCREEN),
+  //                 child: const Text('Home Screen'),
+  //               ),
+  //               TextButton(
+  //                 onPressed: () =>
+  //                     Navigator.of(context).pop(WallpaperManager.LOCK_SCREEN),
+  //                 child: const Text('Lock Screen'),
+  //               ),
+  //             ],
+  //           );
+  //         },
+  //       );
 
-        if (selectedLocation != null) {
-          // Fetch the image as bytes
-          final Uint8List imageData =
-              (await http.get(Uri.parse(widget.imageUrl))).bodyBytes;
+  //       if (selectedLocation != null) {
+  //         // Fetch the image as bytes
+  //         final Uint8List imageData =
+  //             (await http.get(Uri.parse(widget.imageUrl))).bodyBytes;
 
-          if (Platform.isIOS) {
-            // Save the image to a temporary file
-            final tempDir = await getTemporaryDirectory();
-            final file = File('${tempDir.path}/wallpaper.png');
-            await file.writeAsBytes(imageData);
+  //         if (Platform.isIOS) {
+  //           // Save the image to a temporary file
+  //           final tempDir = await getTemporaryDirectory();
+  //           final file = File('${tempDir.path}/wallpaper.png');
+  //           await file.writeAsBytes(imageData);
 
-            // Set wallpaper using the saved file path
-            await AsyncWallpaper.setWallpaper(
-              url: file.path,
-            );
-          } else {
-            final file = File('${widget.imageUrl}.png');
-            await file.writeAsBytes(imageData);
+  //           // Set wallpaper using the saved file path
+  //           await AsyncWallpaper.setWallpaper(
+  //             url: file.path,
+  //           );
+  //         } else {
+  //           final file = File('${widget.imageUrl}.png');
+  //           await file.writeAsBytes(imageData);
 
-            // Set wallpaper using the saved file path
-            await WallpaperManager.setWallpaperWithCrop(
-                file.path, selectedLocation);
-          }
-        }
-      } else {
-        // Set wallpaper using async_wallpaper for iOS
-        await AsyncWallpaper.setWallpaper(
-          wallpaperLocation: 0,
-          url: widget.imageUrl,
-        );
-      }
+  //           // Set wallpaper using the saved file path
+  //           await WallpaperManager.setWallpaperWithCrop(
+  //               file.path, selectedLocation);
+  //         }
+  //       }
+  //     } else {
+  //       // Set wallpaper using async_wallpaper for iOS
+  //       await AsyncWallpaper.setWallpaper(
+  //         wallpaperLocation: 0,
+  //         url: widget.imageUrl,
+  //       );
+  //     }
 
-      log('Wallpaper set successfully');
-    } catch (e) {
-      log('Error setting wallpaper: $e');
-    }
-  }
+  //     log('Wallpaper set successfully');
+  //   } catch (e) {
+  //     log('Error setting wallpaper: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

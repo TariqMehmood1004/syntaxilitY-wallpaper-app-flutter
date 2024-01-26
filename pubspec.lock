@@ -17,14 +17,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
-  bitmap:
-    dependency: "direct main"
-    description:
-      name: bitmap
-      sha256: ffd06e99690114908922a68b9e9982df380cfbd80067c5c434a6b8c68b055bce
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -161,7 +153,7 @@ packages:
     source: sdk
     version: "0.0.0"
   fluttertoast:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: fluttertoast
       sha256: dfdde255317af381bfc1c486ed968d5a43a2ded9c931e87cbecd88767d6a71c1
@@ -487,4 +479,4 @@ packages:
     version: "1.0.4"
 sdks:
   dart: ">=3.2.3 <4.0.0"
-  flutter: ">=3.13.9"
+  flutter: ">=3.10.0"
