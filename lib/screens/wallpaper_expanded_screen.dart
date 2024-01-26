@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api, sized_box_for_whitespace, unused_import, unnecessary_import
+// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api, sized_box_for_whitespace, unused_import, unnecessary_import, unnecessary_cast
 
 import 'dart:io';
 
@@ -161,9 +161,9 @@ class _WallpaperExpandedScreenState extends State<WallpaperExpandedScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text(
-          'tumigo wallpaper ${widget.wallpaperId}',
-          style: const TextStyle(
+        title: const Text(
+          '',
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.normal,
             fontSize: 16.0,
@@ -196,8 +196,14 @@ class _WallpaperExpandedScreenState extends State<WallpaperExpandedScreen> {
             onInteractionStart: (details) {
               _transformationController.value = Matrix4.identity();
             },
-            child: Image.network(
-              widget.imageUrl,
+            child: Image(
+              image: widget.imageUrl.startsWith('http')
+                  ? NetworkImage(widget.imageUrl) as ImageProvider<Object>
+                  : FileImage(
+                      File(
+                        widget.imageUrl,
+                      ),
+                    ) as ImageProvider<Object>,
               fit: BoxFit.cover,
             ),
           ),

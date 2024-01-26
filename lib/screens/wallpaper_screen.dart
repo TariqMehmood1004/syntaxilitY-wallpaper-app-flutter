@@ -1,6 +1,11 @@
-// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers, sized_box_for_whitespace
+// ignore_for_file: use_super_parameters, library_private_types_in_public_api, avoid_unnecessary_containers, sized_box_for_whitespace, unnecessary_cast
+
+import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:syntaxity_wallpaper/Helpers/wallpaper_database_helpers.dart';
 import 'package:syntaxity_wallpaper/Models/wallpaper_model.dart';
 import 'package:syntaxity_wallpaper/screens/wallpaper_expanded_screen.dart';
@@ -67,148 +72,241 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Save the picked image to the database
+      await _saveImageToDatabase(pickedFile.path);
+    }
+  }
+
+  // Future<void> _saveImageToDatabase(String imagePath) async {
+  //   // generate the integer random id for the wallpaper
+  //   Random random = Random();
+  //   int randomId = random.nextInt(1000000);
+  //   Wallpaper wallpaper = Wallpaper(imageUrl: imagePath, id: randomId);
+  //   await WallpaperDatabaseHelper().insertWallpaper(wallpaper);
+  // }
+
+  Future<void> _saveImageToDatabase(String imagePath) async {
+    // Generate the integer random id for the wallpaper
+    Random random = Random();
+    int randomId = random.nextInt(1000000);
+
+    // Check if the image path is a local file path
+    if (imagePath.startsWith('file://')) {
+      // For local file paths, store the path directly
+      Wallpaper wallpaper = Wallpaper(imageUrl: imagePath, id: randomId);
+      await _databaseHelper.insertWallpaper(wallpaper);
+    } else {
+      // For other cases, save the image to a temporary file and store its path
+      Directory tempDir = await getTemporaryDirectory();
+      String tempPath = '${tempDir.path}/$randomId.jpg';
+
+      // Copy the image to the temporary path
+      File(imagePath).copySync(tempPath);
+
+      Wallpaper wallpaper = Wallpaper(imageUrl: tempPath, id: randomId);
+      await _databaseHelper.insertWallpaper(wallpaper);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('tumigo Wallpapers'),
       ),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        physics: const BouncingScrollPhysics(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 200,
-                      child: FutureBuilder(
-                        future: _databaseHelper.getWallpapers(),
-                        builder:
-                            (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else if (!snapshot.hasData ||
-                              snapshot.data!.isEmpty) {
-                            return const Text('No wallpapers available.');
-                          } else {
-                            return GridView.builder(
-                              // Adjusted to make it take only the space it needs
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 1,
-                                mainAxisExtent: 300,
-                                mainAxisSpacing: 0,
-                              ),
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              shrinkWrap:
-                                  true, // Adjusted to make it take only the space it needs
-                              itemCount: snapshot.data!.length,
-                              itemBuilder: (context, index) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            WallpaperExpandedScreen(
-                                          imageUrl:
-                                              snapshot.data![index].imageUrl,
-                                          wallpaperId: snapshot.data![index]
-                                              .id, // Pass the wallpaper ID
+      extendBody: true,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: const CircleBorder(),
+        onPressed: () {
+          setState(() {
+            _pickImage();
+            _databaseHelper.getWallpapers();
+          });
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: RefreshIndicator(
+        notificationPredicate: (notification) {
+          if (notification is ScrollStartNotification) {
+            return true;
+          }
+          return false;
+        },
+        onRefresh: () {
+          return _databaseHelper.getWallpapers();
+        },
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          physics: const BouncingScrollPhysics(),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 200,
+                        child: FutureBuilder(
+                          future: _databaseHelper.getWallpapers(),
+                          builder: (context,
+                              AsyncSnapshot<List<Wallpaper>> snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Text('No wallpapers available.');
+                            } else {
+                              // Filter to get the top 5 wallpapers
+                              List<Wallpaper> top5Wallpapers =
+                                  snapshot.data!.take(5).toList();
+
+                              return GridView.builder(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 1,
+                                  mainAxisExtent: 300,
+                                  mainAxisSpacing: 0,
+                                ),
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: top5Wallpapers.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              WallpaperExpandedScreen(
+                                            imageUrl:
+                                                top5Wallpapers[index].imageUrl,
+                                            wallpaperId: top5Wallpapers[index]
+                                                .id, // Pass the wallpaper ID
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                        child: Image(
+                                          image: top5Wallpapers[index]
+                                                  .imageUrl
+                                                  .startsWith('http')
+                                              ? NetworkImage(
+                                                      top5Wallpapers[index]
+                                                          .imageUrl)
+                                                  as ImageProvider<Object>
+                                              : FileImage(File(
+                                                      top5Wallpapers[index]
+                                                          .imageUrl))
+                                                  as ImageProvider<Object>,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.network(
-                                        snapshot.data![index].imageUrl,
-                                        fit: BoxFit.cover,
-                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+
+                // Second Container with GridView
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: FutureBuilder(
+                    future: _databaseHelper.getWallpapers(),
+                    builder:
+                        (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text('No wallpapers available.');
+                      } else {
+                        return GridView.builder(
+                          // Adjusted to make it take only the space it needs
+                          padding: const EdgeInsets.all(8.0),
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 4.0,
+                            mainAxisSpacing: 4.0,
+                            childAspectRatio: 1.0,
+                            mainAxisExtent: 200.0,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        WallpaperExpandedScreen(
+                                      imageUrl: snapshot.data![index].imageUrl,
+                                      wallpaperId: snapshot.data![index]
+                                          .id, // Pass the wallpaper ID
                                     ),
                                   ),
                                 );
                               },
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16.0),
-
-              // Second Container with GridView
-              Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: FutureBuilder(
-                  future: _databaseHelper.getWallpapers(),
-                  builder: (context, AsyncSnapshot<List<Wallpaper>> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No wallpapers available.');
-                    } else {
-                      return GridView.builder(
-                        // Adjusted to make it take only the space it needs
-                        padding: const EdgeInsets.all(8.0),
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 4.0,
-                          mainAxisSpacing: 4.0,
-                          childAspectRatio: 1.0,
-                          mainAxisExtent: 200.0,
-                        ),
-                        itemCount: snapshot.data!.length,
-                        shrinkWrap: true,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WallpaperExpandedScreen(
-                                    imageUrl: snapshot.data![index].imageUrl,
-                                    wallpaperId: snapshot.data![index]
-                                        .id, // Pass the wallpaper ID
-                                  ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Image(
+                                  image: snapshot.data![index].imageUrl
+                                          .startsWith('http')
+                                      ? NetworkImage(
+                                              snapshot.data![index].imageUrl)
+                                          as ImageProvider<Object>
+                                      : FileImage(
+                                          File(
+                                            snapshot.data![index].imageUrl,
+                                          ),
+                                        ) as ImageProvider<Object>,
+                                  fit: BoxFit.cover,
                                 ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.network(
-                                snapshot.data![index].imageUrl,
-                                fit: BoxFit.cover,
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    }
-                  },
+                            );
+                          },
+                        );
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
