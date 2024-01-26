@@ -1,10 +1,17 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api, sized_box_for_whitespace
+// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api, sized_box_for_whitespace, unused_import, unnecessary_import
 
-import 'dart:developer';
+import 'dart:io';
 
-import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
 import 'package:flutter_wallpaper_manager/flutter_wallpaper_manager.dart';
+import 'package:async_wallpaper/async_wallpaper.dart';
+import 'package:http/http.dart' as http;
+import 'dart:ui' as ui;
+
+import 'package:path_provider/path_provider.dart';
 
 class WallpaperExpandedScreen extends StatefulWidget {
   final String imageUrl;
@@ -31,22 +38,63 @@ class _WallpaperExpandedScreenState extends State<WallpaperExpandedScreen> {
 
   bool isSetWallpaper = false;
 
-  // Method to set wallpaper
   Future<void> setWallpaper() async {
     try {
       if (isSetWallpaper) {
-        int location = WallpaperManager.BOTH_SCREEN; //can be Home/Lock Screen
-        bool result = await WallpaperManager.setWallpaperFromFile(
-            widget.imageUrl, location);
-        if (result) {
-          log('Wallpaper set successfully');
-        } else {
-          log('Error setting wallpaper');
+        // Prompt user to choose Home or Lock screen
+        int? selectedLocation = await showDialog<int>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Choose wallpaper location'),
+              content:
+                  const Text('Select where you want to set the wallpaper:'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(WallpaperManager.HOME_SCREEN),
+                  child: const Text('Home Screen'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(WallpaperManager.LOCK_SCREEN),
+                  child: const Text('Lock Screen'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (selectedLocation != null) {
+          // Fetch the image as bytes
+          final Uint8List imageData =
+              (await http.get(Uri.parse(widget.imageUrl))).bodyBytes;
+
+          if (Platform.isIOS) {
+            // Save the image to a temporary file
+            final tempDir = await getTemporaryDirectory();
+            final file = File('${tempDir.path}/wallpaper.png');
+            await file.writeAsBytes(imageData);
+
+            // Set wallpaper using the saved file path
+            await AsyncWallpaper.setWallpaper(
+              url: file.path,
+            );
+          } else {
+            final file = File('${widget.imageUrl}.png');
+            await file.writeAsBytes(imageData);
+
+            // Set wallpaper using the saved file path
+            await WallpaperManager.setWallpaperWithCrop(
+                file.path, selectedLocation);
+          }
         }
       } else {
         // Set wallpaper using async_wallpaper for iOS
         await AsyncWallpaper.setWallpaper(
-            wallpaperLocation: 0, url: widget.imageUrl);
+          wallpaperLocation: 0,
+          url: widget.imageUrl,
+        );
       }
 
       log('Wallpaper set successfully');
@@ -76,7 +124,7 @@ class _WallpaperExpandedScreenState extends State<WallpaperExpandedScreen> {
               });
 
               // Call the setWallpaper method when the button is tapped
-              setWallpaper();
+              // setWallpaper();
             },
             child: Container(
               width: 200,
