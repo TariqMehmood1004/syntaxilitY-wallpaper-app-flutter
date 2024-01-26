@@ -55,4 +55,29 @@ class WallpaperDatabaseHelper {
       return Wallpaper.fromMap(maps[i]);
     });
   }
+
+  Future<int> deleteWallpaper(int id) async {
+    Database db = await database;
+    return await db.delete('wallpapers', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> updateWallpaper(Wallpaper wallpaper) async {
+    Database db = await database;
+    return await db.update(
+      'wallpapers',
+      wallpaper.toMap(),
+      where: 'id = ?',
+      whereArgs: [wallpaper.id],
+    );
+  }
+
+  Future<int> deleteAllWallpapers() async {
+    Database db = await database;
+    return await db.delete('wallpapers');
+  }
+
+  Future close() async {
+    Database db = await database;
+    db.close();
+  }
 }
